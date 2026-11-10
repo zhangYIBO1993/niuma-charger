@@ -17,6 +17,7 @@ BAR_SLOTS = 20
 
 # 官方放假安排按年登记：每年 10-11 月国务院办公厅发布次年通知后，往 TABLES 加一年即可。
 # 2026 来源：国办发明电〔2025〕7号《关于2026年部分节假日安排的通知》
+# 2027 来源：国办发明电〔2026〕10号《关于2027年部分节假日安排的通知》（2026-11-05 发布）
 TABLES = {
     2026: {
         "holidays": (
@@ -30,6 +31,19 @@ TABLES = {
         ),
         "makeup": ("2026-01-04", "2026-02-14", "2026-02-28", "2026-05-09",
                    "2026-09-20", "2026-10-10"),  # 调休补班
+    },
+    2027: {
+        "holidays": (
+            ("2027-01-01", "2027-01-03", "元旦"),
+            ("2027-02-05", "2027-02-13", "春节"),
+            ("2027-04-03", "2027-04-05", "清明节"),
+            ("2027-05-01", "2027-05-05", "劳动节"),
+            ("2027-06-09", "2027-06-09", "端午节"),
+            ("2027-09-15", "2027-09-15", "中秋节"),
+            ("2027-10-01", "2027-10-07", "国庆节"),
+        ),
+        "makeup": ("2027-01-31", "2027-02-14", "2027-05-08", "2027-09-26",
+                   "2027-10-09"),  # 调休补班
     },
 }
 
@@ -375,9 +389,15 @@ def selftest():
     assert day_kind(dt.date(2026, 1, 4)) == (True, "调休补班", False)
     assert day_kind(dt.date(2026, 11, 7)) == (False, None, False)  # 周六
     assert day_kind(dt.date(2026, 11, 4)) == (True, None, False)  # 周三
-    assert day_kind(dt.date(2027, 1, 1)) == (True, None, True)  # 周五，表外回退
+    assert day_kind(dt.date(2027, 1, 1)) == (False, "元旦", False)
+    assert day_kind(dt.date(2027, 2, 10)) == (False, "春节", False)
+    assert day_kind(dt.date(2027, 1, 31)) == (True, "调休补班", False)  # 周日补班
+    assert day_kind(dt.date(2027, 6, 9)) == (False, "端午节", False)  # 逢周三只放当日
+    assert day_kind(dt.date(2027, 9, 26)) == (True, "调休补班", False)
+    assert day_kind(dt.date(2028, 1, 4)) == (True, None, True)  # 2028 表外回退，周二
     assert next_workday(dt.date(2026, 11, 5)) == dt.date(2026, 11, 6)
     assert next_workday(dt.date(2026, 10, 1)) == dt.date(2026, 10, 8)
+    assert next_workday(dt.date(2027, 1, 30)) == dt.date(2027, 1, 31)  # 春节前最后工作日的下一个是补班周日
     cfg = {"salary": 20000, "start": "09:00", "end": "18:00"}
     assert phase(dt.datetime(2026, 11, 4, 8, 59), 540, 1080, True) == "pre"
     assert phase(dt.datetime(2026, 11, 4, 9, 0), 540, 1080, True) == "work"
@@ -429,8 +449,8 @@ def selftest():
     assert "牛马充电中" in out.getvalue() and "月薪未配置" in out.getvalue()
     out = io.StringIO()
     with contextlib.redirect_stdout(out):
-        render(dt.datetime(2027, 1, 5, 15, 0), cfg)  # 2027 表外
-    assert "2027 年节假日表待官方发布后更新" in out.getvalue()
+        render(dt.datetime(2028, 1, 5, 15, 0), cfg)  # 2028 表外
+    assert "2028 年节假日表待官方发布后更新" in out.getvalue()
     print("selftest OK")
 
 
